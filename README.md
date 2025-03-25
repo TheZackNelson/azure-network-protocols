@@ -1,95 +1,135 @@
 <p align="center">
-  <img src="https://i.imgur.com/Ua7udoS.png" alt="Traffic Examination"/>
+  <img src="https://i.imgur.com/Ua7udoS.png" alt="Azure Traffic Examination"/>
 </p>
 
-<h1 align="center">Network Security Groups (NSGs) and Inspecting Traffic Between Azure Virtual Machines</h1>
+<h1 align="center">Azure Network Protocols and Network Security Groups (NSGs)</h1>
 
-In this tutorial, we observe various network traffic between Azure Virtual Machines using Wireshark and analyze how Network Security Groups (NSGs) impact that traffic. This lab demonstrates how protocols behave and how NSGs control traffic flow in a cloud environment.
+In this lab, you'll explore how different network protocols behave between Azure virtual machines and use **Wireshark** to inspect that traffic. You'll also experiment with **Network Security Groups (NSGs)** to control which types of traffic are allowed or blocked.
 
 ---
 
 <h2>🎥 Video Demonstration</h2>
 
-- ### [YouTube: Azure Virtual Machines, Wireshark, and Network Security Groups](https://www.youtube.com) 
+- ### [YouTube: Azure VMs, Wireshark, and NSG Traffic Analysis](https://www.youtube.com) *(Coming Soon)*
 
 ---
 
 <h2>🧰 Environments and Technologies Used</h2>
 
-- Microsoft Azure (Virtual Machines/Compute)
+- Microsoft Azure (Virtual Machines & Networking)
 - Remote Desktop Protocol (RDP)
-- Ubuntu Terminal (SSH)
-- Network Protocols: ICMP, DNS, HTTP/HTTPS, RDP, SSH
+- SSH Terminal (Ubuntu)
 - Wireshark (Network Protocol Analyzer)
+- Network Security Groups (NSGs)
 
 ---
 
 <h2>🖥️ Operating Systems Used</h2>
 
-- Windows 10 Pro (21H2)
-- Ubuntu Server 20.04 LTS
+- Windows 10 Pro (21H2) — For capturing and analyzing packets  
+- Ubuntu Server 20.04 LTS — For generating Linux-side traffic
 
 ---
 
-<h2>📋 High-Level Steps</h2>
+<h2>📦 Lab Objectives</h2>
 
-- Deploy two Virtual Machines in Azure (Windows and Linux)
-- Install and configure Wireshark on the Windows VM
-- Initiate traffic between the two VMs (ICMP, SSH, HTTP, DNS)
-- Modify NSG rules and observe blocked/allowed traffic in real time
-
----
-
-<h2>🔍 Actions and Observations</h2>
-
-<p>
-<img src="https://i.imgur.com/Ez5xgrs.png" height="80%" width="80%" alt="VM Deployment"/>
-</p>
-<p>
-<strong>Step 1: Deploy Azure Virtual Machines</strong><br />
-Create a Windows 10 VM and an Ubuntu 20.04 VM in the same virtual network. Assign each VM a Network Security Group (NSG) and open the necessary ports (RDP for Windows, SSH for Linux, ICMP via custom rules).
-</p>
-<br />
-
-<p>
-<img src="https://i.imgur.com/FIl9ZfM.png" height="80%" width="80%" alt="Wireshark Setup"/>
-</p>
-<p>
-<strong>Step 2: Capture Network Traffic</strong><br />
-Install Wireshark on the Windows VM. Start a capture on the active network interface. From the Ubuntu VM, ping the Windows VM’s private IP and initiate connections (SSH, DNS, HTTP) to generate observable traffic in Wireshark.
-</p>
-<br />
-
-<p>
-<img src="https://i.imgur.com/sZ0NVQn.png" height="80%" width="80%" alt="NSG Rules Modification"/>
-</p>
-<p>
-<strong>Step 3: Experiment with NSG Rules</strong><br />
-Using the Azure Portal, add or remove NSG rules to allow or block specific traffic types (e.g., deny ICMP or allow port 80). Observe how blocked packets appear in Wireshark (e.g., unreachable messages or dropped connections).
-</p>
-<br />
-
-<p>
-<img src="https://i.imgur.com/xQ2EULI.png" height="80%" width="80%" alt="Protocol Filtering"/>
-</p>
-<p>
-<strong>Step 4: Analyze Protocol Behavior</strong><br />
-Filter captured packets in Wireshark using filters such as `icmp`, `tcp.port==22`, or `dns`. Examine packet headers, source/destination IPs, protocol handshakes, and analyze how traffic changes based on NSG configurations.
-</p>
+- Deploy two VMs in Azure within the same virtual network
+- Install and configure **Wireshark** on the Windows VM
+- Generate traffic using various protocols (ICMP, SSH, HTTP, DNS, RDP)
+- Use NSGs to allow or block traffic types
+- Observe how filtered packets appear (or don’t) in Wireshark
 
 ---
 
-<h2>💡 Key Observations</h2>
+<h2>⚙️ Lab Setup & Execution</h2>
 
-- NSGs act as virtual firewalls at the subnet or NIC level.
-- Denied traffic does not appear on the receiving VM but may generate ICMP unreachable responses.
-- Wireshark helps visualize protocol behavior, packet size, and latency.
-- ICMP, DNS, and HTTP are great for basic traffic tests; RDP and SSH help validate secure access controls.
+### ✅ Step 1: Deploy Two Azure VMs
+
+- **VM 1 (Windows 10)**  
+  Name: `Win-VM`  
+  Used for capturing and inspecting traffic with **Wireshark**
+
+- **VM 2 (Ubuntu 20.04)**  
+  Name: `Linux-VM`  
+  Used to generate traffic toward the Windows VM
+
+- Place both VMs in the **same Virtual Network and Subnet**
+
+---
+
+### ✅ Step 2: Install Wireshark on Windows VM
+
+- Log in to `Win-VM` via RDP
+- Download and install **Wireshark**
+- Launch Wireshark and select the primary Ethernet interface for capture
+- Begin capturing traffic
+
+---
+
+### ✅ Step 3: Generate and Observe Traffic
+
+From **Linux-VM**:
+
+- Ping the Windows VM using `ping <private IP>`
+- Attempt an SSH connection to Windows VM (will fail, but still sends traffic)
+- Use `curl` to make HTTP requests to the Windows VM
+- Run `nslookup` or `dig` to test DNS queries (if a DNS service is set up)
+
+From **Win-VM**:
+
+- Observe ICMP, TCP handshakes, DNS requests, and HTTP packets in Wireshark
+- Apply filters like:
+  - `icmp`
+  - `tcp.port == 22` (SSH)
+  - `tcp.port == 80` (HTTP)
+  - `dns`
+
+---
+
+### ✅ Step 4: Modify Network Security Groups (NSGs)
+
+- In Azure Portal, go to **NSG > Inbound Rules**
+- Add or remove rules to block/allow protocols:
+  - Block ICMP by removing the rule or setting Deny All Inbound
+  - Allow port 80 (HTTP) or 22 (SSH)
+  - Observe behavior in **real time** with Wireshark
+
+---
+
+<h2>🔍 Key Observations</h2>
+
+- ICMP (ping) traffic disappears from Wireshark when blocked by NSG
+- TCP handshake (SYN, SYN-ACK, ACK) is visible for allowed protocols
+- DNS traffic uses UDP port 53 and can be filtered easily
+- NSGs apply at the **subnet or NIC level**, not inside the OS
+- Wireshark helps **visually confirm** whether packets are being dropped or allowed
+
+---
+
+<h2>📚 Real-World Application</h2>
+
+This lab reinforces the importance of:
+
+- Network protocol fundamentals (ICMP, TCP, UDP)
+- Understanding firewall behavior in cloud environments
+- Packet-level analysis using Wireshark
+- Cloud security basics using NSGs
+
+---
+
+<h2>💡 Final Thoughts</h2>
+
+If you're pursuing a career in networking, cloud administration, or cybersecurity, these labs are excellent practice. Do them multiple times until you can deploy and troubleshoot traffic from memory.
+
+Want more practice?
+- Try adding a third VM with a web server
+- Use port scanning tools to test NSG limits
+- Set up logging with Azure Network Watcher
 
 ---
 
 <h2>📬 Questions or Issues?</h2>
 
-Open an issue in this repo or comment on the video walkthrough for help or suggestions!
+Open an issue in this repo or comment on the walkthrough video if you need help or want to share your own setup!
 
 ---
